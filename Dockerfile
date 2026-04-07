@@ -17,4 +17,4 @@ EXPOSE 5000
 
 # 6. COMANDO DEFINITIVO: Arranca el servidor Flask
 # Usamos el flag --host=0.0.0.0 para que sea accesible desde fuera del contenedor
-CMD ["python", "test_app.py"]
+CMD ["python", "app.py"]
