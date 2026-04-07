@@ -1,20 +1,20 @@
+# 1. Imagen base ligera de Python
 FROM python:3.9-slim
 
-# Evita problemas de buffering
-ENV PYTHONDONTWRITEBYTECODE=1
-ENV PYTHONUNBUFFERED=1
+# 2. Directorio de trabajo dentro del contenedor
+WORKDIR /app
 
-# Carpeta de trabajo
-WORKDIR /home/alumno/Documentos/proyecto-ci-cd-enrique
-
-# Copiar dependencias primero (mejor caché)
+# 3. Copiamos todos los archivos del repositorio al contenedor
+# (app.py, test_app.py, etc.)
 COPY . .
 
-# Instalar dependencias
+# 4. Instalamos las dependencias necesarias
+# Instalamos flask para la app y pytest para que Jenkins pueda testear
 RUN pip install --no-cache-dir flask pytest
 
-# Puerto de la app
+# 5. Informamos que la app usará el puerto 5000
 EXPOSE 5000
 
-# Ejecutar aplicación
-CMD ["python", "app.py"]
+# 6. COMANDO DEFINITIVO: Arranca el servidor Flask
+# Usamos el flag --host=0.0.0.0 para que sea accesible desde fuera del contenedor
+CMD ["python", "test_app.py"]
