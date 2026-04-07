@@ -18,22 +18,16 @@ pipeline {
         }
 
         stage('Install dependencies & Test') {
-            steps {
-                // Instalamos dependencias y corremos pytest
-                // Usamos --break-system-packages si el python del host es >= 3.11
-                sh '''
-                    pip install flask pytest --break-system-packages || pip install flask pytest
-                    python3 -m pytest test_app.py
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG} ."
-            }
-        }
-
+    agent {
+        docker { image 'python:3.9-slim' }
+    }
+    steps {
+        sh '''
+            pip install flask pytest
+            python -m pytest test_app.py
+        '''
+    }
+}
         stage('Login & Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
