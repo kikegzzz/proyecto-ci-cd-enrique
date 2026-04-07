@@ -2,51 +2,54 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "kikegzzz/proyecto-ci-cd-enrique"
+        // REEMPLAZA ESTO CON TU USUARIO REAL DE DOCKERHUB
+        DOCKERHUB_USER = 'kikegzzz'
+        APP_NAME = 'proyecto-ci-cd-enrique'
+        IMAGE_TAG = 'latest'
     }
 
     stages {
-
-        stage('Clone') {
+        stage('Clone & Workspace Info') {
             steps {
-                git 'https://github.com/kikegzzz/proyecto-ci-cd-enrique.git'
+                // El checkout ya se hace automáticamente por Jenkins SCM
+                sh 'ls -la'
+                echo "Rama actual: ${env.BRANCH_NAME}"
             }
         }
 
         stage('Install dependencies & Test') {
             steps {
+                // Instalamos dependencias y corremos pytest
+                // Usamos --break-system-packages si el python del host es >= 3.11
                 sh '''
-                pip install flask pytest
-                pytest
+                    pip install flask pytest --break-system-packages || pip install flask pytest
+                    python3 -m pytest test_app.py
                 '''
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t $DOCKER_IMAGE .'
+                sh "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG} ."
             }
         }
 
-        stage('Login DockerHub') {
+        stage('Login & Push to DockerHub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'USER', passwordVariable: 'PASS')]) {
-                    sh 'echo $PASS | docker login -u $USER --password-stdin'
+                withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                    sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
+                    sh "docker push ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}"
                 }
-            }
-        }
-
-        stage('Push Docker Image') {
-            steps {
-                sh 'docker push $DOCKER_IMAGE'
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
+                // Asegúrate de que Minikube esté corriendo en el host
                 sh '''
-                kubectl apply -f deployment.yaml
-                kubectl apply -f service.yaml
+                    kubectl apply -f deployment.yaml
+                    kubectl apply -f service.yaml
+                    kubectl rollout restart deployment proyecto-ci-cd-enrique || echo "Primer despliegue"
                 '''
             }
         }
@@ -54,10 +57,10 @@ pipeline {
 
     post {
         success {
-            echo 'Pipeline completado correctamente'
+            echo '¡Pipeline finalizado con éxito! La imagen está en DockerHub y desplegada en K8s.'
         }
         failure {
-            echo 'Pipeline fallido'
+            echo 'El Pipeline ha fallado. Revisa los logs de la etapa que falló.'
         }
     }
 }
