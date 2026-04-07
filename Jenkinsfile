@@ -44,7 +44,7 @@ pipeline {
             }
         }
     }
-
+}
     post {
         success { echo '¡Pipeline finalizado con éxito!' }
         failure { echo 'Pipeline fallido' }
