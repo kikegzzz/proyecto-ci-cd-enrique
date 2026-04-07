@@ -5,7 +5,7 @@ ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
 # Carpeta de trabajo
-WORKDIR /app
+WORKDIR /home/alumno/Documentos/proyecto-ci-cd-enrique
 
 # Copiar dependencias primero (mejor caché)
 COPY . .
@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir flask pytest
 EXPOSE 5000
 
 # Ejecutar aplicación
-CMD ["python", "app.py"]
+CMD ["python", "test_app.py"]
