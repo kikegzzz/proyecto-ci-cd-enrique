@@ -36,11 +36,11 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    kubectl apply -f deployment.yaml --validate=false
-                    kubectl apply -f service.yaml --validate=false
-                    kubectl rollout restart deployment proyecto-ci-cd-enrique || echo "Primer despliegue"
-                '''
+		script {
+            // Forzamos la IP del host y el puerto del proxy directamente en el comando
+            sh "kubectl --server=http://172.17.0.1:8001 apply -f deployment.yaml --validate=false"
+            sh "kubectl --server=http://172.17.0.1:8001 apply -f service.yaml --validate=false"
+            sh "kubectl --server=http://172.17.0.1:8001 rollout restart deployment proyecto-ci-cd-enrique"
             }
         }
     }
