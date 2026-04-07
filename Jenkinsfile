@@ -40,7 +40,7 @@ pipeline {
             // Forzamos la IP del host y el puerto del proxy directamente en el comando
             sh "kubectl --server=http://172.17.0.1:8001 apply -f deployment.yaml --validate=false"
             sh "kubectl --server=http://172.17.0.1:8001 apply -f service.yaml --validate=false"
-            sh "kubectl --server=http://172.17.0.1:8001 rollout restart deployment proyecto-ci-cd-enrique"
+            sh "kubectl --server=http://172.17.0.1:8001 rollout restart deployment python-app"
             }
         }
     }
