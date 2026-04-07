@@ -17,4 +17,4 @@ RUN pip install --no-cache-dir flask pytest
 EXPOSE 5000
 
 # Ejecutar aplicación
-CMD ["python", "test_app.py"]
+CMD ["python", "app.py"]

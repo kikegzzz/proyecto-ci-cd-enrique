@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKERHUB_USER = 'kikegzzz' // Asegúrate de que este es tu usuario
+        DOCKERHUB_USER = 'kikegzzz' 
         APP_NAME = 'proyecto-ci-cd-enrique'
         IMAGE_TAG = 'latest'
     }
@@ -14,26 +14,19 @@ pipeline {
             }
         }
 
-        stage('Install dependencies & Test') {
+        stage('Build & Test') {
             steps {
-                // Instalamos pip y las librerías directamente en el agente
-                sh '''
-                    apt-get update && apt-get install -y python3-pip
-                    pip3 install flask pytest --break-system-packages || pip3 install flask pytest
-                    python3 -m pytest test_app.py
-                '''
-            }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                // Aquí usamos el comando docker del host
-                sh "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG} ."
+                // Construimos la imagen localmente para testearla
+                sh "docker build -t ${APP_NAME}-test ."
+                
+                // Ejecutamos los tests DENTRO del contenedor que acabamos de crear
+                sh "docker run --rm ${APP_NAME}-test python3 -m pytest test_app.py"
             }
         }
 
         stage('Login & Push to DockerHub') {
             steps {
+                sh "docker tag ${APP_NAME}-test ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}"
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                     sh "echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin"
                     sh "docker push ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG}"
@@ -53,7 +46,7 @@ pipeline {
     }
 
     post {
-        failure { echo 'Pipeline fallido' }
         success { echo '¡Pipeline finalizado con éxito!' }
+        failure { echo 'Pipeline fallido' }
     }
 }
