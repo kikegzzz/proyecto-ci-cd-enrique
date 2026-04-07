@@ -2,8 +2,7 @@ pipeline {
     agent any
 
     environment {
-        // REEMPLAZA ESTO CON TU USUARIO REAL DE DOCKERHUB
-        DOCKERHUB_USER = 'kikegzzz'
+        DOCKERHUB_USER = 'kikegzzz' // Asegúrate de que este es tu usuario
         APP_NAME = 'proyecto-ci-cd-enrique'
         IMAGE_TAG = 'latest'
     }
@@ -11,23 +10,28 @@ pipeline {
     stages {
         stage('Clone & Workspace Info') {
             steps {
-                // El checkout ya se hace automáticamente por Jenkins SCM
                 sh 'ls -la'
-                echo "Rama actual: ${env.BRANCH_NAME}"
             }
         }
 
         stage('Install dependencies & Test') {
-    agent {
-        docker { image 'python:3.9-slim' }
-    }
-    steps {
-        sh '''
-            pip install flask pytest
-            python -m pytest test_app.py
-        '''
-    }
-}
+            steps {
+                // Instalamos pip y las librerías directamente en el agente
+                sh '''
+                    apt-get update && apt-get install -y python3-pip
+                    pip3 install flask pytest --break-system-packages || pip3 install flask pytest
+                    python3 -m pytest test_app.py
+                '''
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                // Aquí usamos el comando docker del host
+                sh "docker build -t ${DOCKERHUB_USER}/${APP_NAME}:${IMAGE_TAG} ."
+            }
+        }
+
         stage('Login & Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
@@ -39,7 +43,6 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                // Asegúrate de que Minikube esté corriendo en el host
                 sh '''
                     kubectl apply -f deployment.yaml
                     kubectl apply -f service.yaml
@@ -50,11 +53,7 @@ pipeline {
     }
 
     post {
-        success {
-            echo '¡Pipeline finalizado con éxito! La imagen está en DockerHub y desplegada en K8s.'
-        }
-        failure {
-            echo 'El Pipeline ha fallado. Revisa los logs de la etapa que falló.'
-        }
+        failure { echo 'Pipeline fallido' }
+        success { echo '¡Pipeline finalizado con éxito!' }
     }
 }
