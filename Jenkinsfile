@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = "TU_USUARIO_DOCKERHUB/proyecto-ci-cd"
+        DOCKER_IMAGE = "kikegzzz/proyecto-ci-cd-enrique"
     }
 
     stages {
