@@ -9,7 +9,7 @@ pipeline {
 
         stage('Clone') {
             steps {
-                git 'https://github.com/kikegzzz/proyecto-ci-cd-tu_nombre.git'
+                git 'https://github.com/kikegzzz/proyecto-ci-cd-enrique.git'
             }
         }
 
